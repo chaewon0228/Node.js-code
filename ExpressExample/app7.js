@@ -32,3 +32,5 @@ app.use(function(req, res, next){
     res.write('<div><p>Param password : ' + paramPassword + '</p></div>');
     res.end();
 });
+
+http.createServer(app).listen(3000, function() {} );
