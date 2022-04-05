@@ -13,20 +13,19 @@ app.use('/public', static(path.join(__dirname, 'public')));
 
 var router = express.Router();
 
-router.route('/process/login').post(function(req, res) {
-    console.log('/process/login 처리함.');
-
-    var paramName = req.params.name;
-
-    var paramId = req.body.id || req.query.id;
+router.route('/process/users/:id').post(function(req, res) {
+    console.log('/process/users/:id 처리함.');
+    var paramId = req.params.id;
+    console.log('/process/user와 토큰 %s를 이용해 처리함.', paramId);
+    var paramName = req.body.name || req.query.name;
     var paramPassword = req.body.password || req.query.password;
 
     res.writeHead('200', {'Content-Type':'text/html;charset=utf8'});
     res.write('<h1>Express 서버에서 응답한 결과입니다.</h1>');
-    res.write('<div><p>Param name : ' + paramName + '</p></div>');
     res.write('<div><p>Param id : ' + paramId + '</p></div>');
+    res.write('<div><p>Param name : ' + paramName + '</p></div>');
     res.write('<div><p>Param password : ' + paramPassword + '</p></div>');
-    res.write("<br><br><a href='/public/login2.html'>로그인 페이지로 돌아가기</a>");
+    res.write("<br><br><a href='/public/login4.html'>로그인 페이지로 돌아가기</a>");
     res.end();
 });
 app.use('/', router);
@@ -41,9 +40,5 @@ var errorHandler = expressErrorHandler({
 app.use(expressErrorHandler.httpError(404));
 app.use(errorHandler);
 //
-
-// app.all('*', function(req, res) {
-//     res.status(404).send('<h1>ERROR - 페이지를 찾을 수 없습니다.</h1>');
-// });
 
 http.createServer(app).listen(3000, function() {} );
