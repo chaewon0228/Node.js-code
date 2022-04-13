@@ -10,7 +10,13 @@ var cors = require('cors');
 const { append } = require('express/lib/response');
 const express = require('express');
 
-// ?
+// 
+var http = require('http'), path = require('path');
+var bodyParser = require('body-parser'), static = require('serve-static');
+var app = express();
+app.set('port', process.env.PORT || 3000);
+app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json());
 
 // public 폴더와 uploads 폴더 오픈
 app.use('/public', static(path.join(__dirname, 'public')));
@@ -99,3 +105,8 @@ router.route('/process/photo').post(upload.array('photo1', 1), function(req, res
 });
 
 app.use('/', router);
+
+// express 서버 시작
+http.createServer(app).listen(3000, function() {
+    console.log('Express server listening on port' + app.get('port'));
+} );
