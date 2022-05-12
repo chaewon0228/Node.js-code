@@ -198,7 +198,7 @@ router.route('/process/photomulti_link').post(upload.array('photo', 12), functio
   
 						}
     // 추가6
-	res.write("<br><br><button type = button><a href='/process/product'>상품 페이지로 이동하기</a></button"); 
+	res.write("<br><br><button type = button style='background-color: bisque;'><a href='/process/product'>상품 페이지로 이동하기</a></button"); 
 
 			}
 	} catch(err) {
