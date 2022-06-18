@@ -11,31 +11,31 @@
  */
 
 // Express 기본 모듈 불러오기
-var express = require('express')
+let express = require('express')
 	, http = require('http')
 	, path = require('path');
 
 // Express의 미들웨어 불러오기
-var bodyParser = require('body-parser')
+let bodyParser = require('body-parser')
 	, cookieParser = require('cookie-parser')
 	, static = require('serve-static')
 	, errorHandler = require('errorhandler');
 
 // 에러 핸들러 모듈 사용
-var expressErrorHandler = require('express-error-handler');
+let expressErrorHandler = require('express-error-handler');
 
 // Session 미들웨어 불러오기
-var expressSession = require('express-session');
+let expressSession = require('express-session');
 
 // mongoose 모듈 사용
-var mongoose = require('mongoose');
+let mongoose = require('mongoose');
 
 // crypto 모듈 불러들이기
-var crypto = require('crypto');
+let crypto = require('crypto');
 
 
 // 익스프레스 객체 생성
-var app = express();
+let app = express();
 
 
 // 기본 속성 설정
@@ -65,18 +65,18 @@ app.use(expressSession({
 //===== 데이터베이스 연결 =====//
 
 // 데이터베이스 객체를 위한 변수 선언
-var database;
+let database;
 
 // 데이터베이스 스키마 객체를 위한 변수 선언
-var UserSchema;
+let UserSchema;
 
 // 데이터베이스 모델 객체를 위한 변수 선언
-var UserModel;
+let UserModel;
 
 //데이터베이스에 연결
 function connectDB() {
 	// 데이터베이스 연결 정보
-	var databaseUrl = 'mongodb://localhost:27017/local';
+	let databaseUrl = 'mongodb://127.0.0.1:27017/local';
 
 	// 데이터베이스 연결
 	console.log('데이터베이스 연결을 시도합니다.');
@@ -91,28 +91,7 @@ function connectDB() {
 
 		// user 스키마 및 모델 객체 생성
 		createUserSchema();
-		UserSchema = ({
-			id: { type: String, required: true, unique: true, 'default': ' ' },
-			hashed_password: { type: String, required: true, 'default': ' ' },
-			salt: { type: String, required: true },
-			name: { type: String, index: 'hashed', 'default': ' ' },
-			age: { type: Number, 'default': -1 },
-			created_at: { type: Date, index: { unique: false }, 'default': Date.now },
-			updated_at: { type: Date, index: { unique: false }, 'default': Date.now }
-		});
 
-		// 스키마에 static 메소드 추가
-		UserSchema.static('findById', function (id, callback) {
-			return this.find({ id: id }, callback);
-		});
-		UserSchema.static('findAll', function (callback) {
-			return this.find({}, callback);
-		});
-		console.log('UserSchema 정의함.');
-
-		// UserModel 모델 정의
-		UserModel = mongoose.model("users2", UserSchema);
-		console.log('UserModel 정의함.')
 
 	});
 
@@ -126,17 +105,19 @@ function connectDB() {
 
 // user 스키마 및 모델 객체 생성
 function createUserSchema() {
+
 	// 스키마 정의
+	// password를 hashed_password로 변경, 각 칼럼에 default 속성 모두 추가, salt 속성 추가
 	UserSchema = mongoose.Schema({
-		id: { type: String, required: true, unique: true, 'default': ' ' },
-		hashed_password: { type: String, required: true, 'default': ' ' },
+		id: { type: String, required: true, unique: true, 'default': '' },
+		hashed_password: { type: String, required: true, 'default': '' },
 		salt: { type: String, required: true },
-		name: { type: String, index: 'hashed', 'default': ' ' },
+		name: { type: String, index: 'hashed', 'default': '' },
 		age: { type: Number, 'default': -1 },
 		created_at: { type: Date, index: { unique: false }, 'default': Date.now },
 		updated_at: { type: Date, index: { unique: false }, 'default': Date.now }
-
 	});
+
 	// password를 virtual 메소드로 정의 : MongoDB에 저장되지 않는 가상 속성임. 
 	// 특정 속성을 지정하고 set, get 메소드를 정의함
 	UserSchema
@@ -147,7 +128,10 @@ function createUserSchema() {
 			this.hashed_password = this.encryptPassword(password);
 			console.log('virtual password의 set 호출됨 : ' + this.hashed_password);
 		})
-		.get(function () { return this._password });
+		.get(function () {
+			console.log('virtual password의 get 호출됨.');
+			return this._password;
+		});
 
 	// 스키마에 모델 인스턴스에서 사용할 수 있는 메소드 추가
 	// 비밀번호 암호화 메소드
@@ -164,38 +148,34 @@ function createUserSchema() {
 		return Math.round((new Date().valueOf() * Math.random())) + '';
 	});
 
-
 	// 인증 메소드 - 입력된 비밀번호와 비교 (true/false 리턴)
 	UserSchema.method('authenticate', function (plainText, inSalt, hashed_password) {
 		if (inSalt) {
-			console.log('authenticate 호출됨 : %s -> %s : %s', plainText,
-				this.encryptPassword(plainText, inSalt), hashed_password);
+			console.log('authenticate 호출됨 : %s -> %s : %s', plainText, this.encryptPassword(plainText, inSalt), hashed_password);
 			return this.encryptPassword(plainText, inSalt) === hashed_password;
-		}
-		else {
-			console.log('authenticate 호출됨 : %s -> %s : %s', plainText,
-				this.encryptPassword(plainText), this.hashed_password);
+		} else {
+			console.log('authenticate 호출됨 : %s -> %s : %s', plainText, this.encryptPassword(plainText), this.hashed_password);
 			return this.encryptPassword(plainText) === this.hashed_password;
 		}
 	});
 
 	// 값이 유효한지 확인하는 함수 정의
-	var validatePresenceOf = function (value) {
+	let validatePresenceOf = function (value) {
 		return value && value.length;
 	};
 
-	// 저장 시의 트리거 함수 정의 (password 필드가 유효하지 않으면 에러)
+	// 저장 시의 트리거 함수 정의 (password 필드가 유효하지 않으면 에러 발생)
 	UserSchema.pre('save', function (next) {
 		if (!this.isNew) return next();
+
 		if (!validatePresenceOf(this.password)) {
 			next(new Error('유효하지 않은 password 필드입니다.'));
-		}
-		else {
+		} else {
 			next();
 		}
-	});
+	})
 
-	// 필드 속성에 대한 유효성 확인(길이값 체크)
+	// 필수 속성에 대한 유효성 확인 (길이값 체크)
 	UserSchema.path('id').validate(function (id) {
 		return id.length;
 	}, 'id 칼럼의 값이 없습니다.');
@@ -208,6 +188,7 @@ function createUserSchema() {
 		return hashed_password.length;
 	}, 'hashed_password 칼럼의 값이 없습니다.');
 
+
 	// 스키마에 static으로 findById 메소드 추가
 	UserSchema.static('findById', function (id, callback) {
 		return this.find({ id: id }, callback);
@@ -217,27 +198,29 @@ function createUserSchema() {
 	UserSchema.static('findAll', function (callback) {
 		return this.find({}, callback);
 	});
+
 	console.log('UserSchema 정의함.');
 
 	// User 모델 정의
 	UserModel = mongoose.model("users3", UserSchema);
-	console.log('users3 정의');
+	console.log('users3 정의함.');
 
-}
+}//function createUserSchema() {-end
+
 
 
 //===== 라우팅 함수 등록 =====//
 
 // 라우터 객체 참조
-var router = express.Router();
+let router = express.Router();
 
 // 로그인 라우팅 함수 - 데이터베이스의 정보와 비교
 router.route('/process/login').post(function (req, res) {
 	console.log('/process/login 호출됨.');
 
 	// 요청 파라미터 확인
-	var paramId = req.body.id || req.query.id;
-	var paramPassword = req.body.password || req.query.password;
+	let paramId = req.body.id || req.query.id;
+	let paramPassword = req.body.password || req.query.password;
 
 	console.log('요청 파라미터 : ' + paramId + ', ' + paramPassword);
 
@@ -258,10 +241,10 @@ router.route('/process/login').post(function (req, res) {
 
 			// 조회된 레코드가 있으면 성공 응답 전송
 			if (docs) {
-				console.dir(docs);
+				console.dir(docs + 'last');
 
 				// 조회 결과에서 사용자 이름 확인
-				var username = docs[0].name;
+				let username = docs[0].name;
 
 				res.writeHead('200', { 'Content-Type': 'text/html;charset=utf8' });
 				res.write('<h1>로그인 성공</h1>');
@@ -293,9 +276,9 @@ router.route('/process/login').post(function (req, res) {
 router.route('/process/adduser').post(function (req, res) {
 	console.log('/process/adduser 호출됨.');
 
-	var paramId = req.body.id || req.query.id;
-	var paramPassword = req.body.password || req.query.password;
-	var paramName = req.body.name || req.query.name;
+	let paramId = req.body.id || req.query.id;
+	let paramPassword = req.body.password || req.query.password;
+	let paramName = req.body.name || req.query.name;
 
 	console.log('요청 파라미터 : ' + paramId + ', ' + paramPassword + ', ' + paramName);
 
@@ -364,9 +347,9 @@ router.route('/process/listuser').post(function (req, res) {
 				res.write('<h2>사용자 리스트</h2>');
 				res.write('<div><ul>');
 
-				for (var i = 0; i < results.length; i++) {
-					var curId = results[i]._doc.id;
-					var curName = results[i]._doc.name;
+				for (let i = 0; i < results.length; i++) {
+					let curId = results[i]._doc.id;
+					let curName = results[i]._doc.name;
 					res.write('    <li>#' + i + ' : ' + curId + ', ' + curName + '</li>');
 				}
 
@@ -393,7 +376,7 @@ app.use('/', router);
 
 
 // 사용자를 인증하는 함수 : 아이디로 먼저 찾고 비밀번호를 그 다음에 비교하도록 함
-var authUser = function (database, id, password, callback) {
+let authUser = function (database, id, password, callback) { //229 라인으로 반환
 	console.log('authUser 호출됨 : ' + id + ', ' + password);
 
 	// 1. 아이디를 이용해 검색
@@ -410,18 +393,15 @@ var authUser = function (database, id, password, callback) {
 			console.log('아이디와 일치하는 사용자 찾음.');
 
 			// 2. 패스워드 확인 : 모델 인스턴스를 객체를 만들고 authenticate() 메소드 호출
-			var user = new UserModel({id:id});
-			var authenticated = user.authenticate(password, results[0]._doc.salt, results[0]._doc.hashed_password);
-
-			if(authenticated){
+			let user = new UserModel({ id: id });
+			let authenticated = user.authenticate(password, results[0]._doc.salt, results[0]._doc.hashed_password);
+			if (authenticated) {
 				console.log('비밀번호 일치함');
 				callback(null, results);
-			}
-			else{
+			} else {
 				console.log('비밀번호 일치하지 않음');
 				callback(null, null);
 			}
-
 
 		} else {
 			console.log("아이디와 일치하는 사용자를 찾지 못함.");
@@ -434,11 +414,11 @@ var authUser = function (database, id, password, callback) {
 
 
 //사용자를 추가하는 함수
-var addUser = function (database, id, password, name, callback) {
+let addUser = function (database, id, password, name, callback) {
 	console.log('addUser 호출됨 : ' + id + ', ' + password + ', ' + name);
 
 	// UserModel 인스턴스 생성
-	var user = new UserModel({ "id": id, "password": password, "name": name });
+	let user = new UserModel({ "id": id, "password": password, "name": name });
 
 	// save()로 저장 : 저장 성공 시 addedUser 객체가 파라미터로 전달됨
 	user.save(function (err, addedUser) {
@@ -455,7 +435,7 @@ var addUser = function (database, id, password, name, callback) {
 
 
 // 404 에러 페이지 처리
-var errorHandler = expressErrorHandler({
+let errorHandler = expressErrorHandler({
 	static: {
 		'404': './public/404.html'
 	}
